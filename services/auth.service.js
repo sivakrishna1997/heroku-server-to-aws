@@ -19,6 +19,8 @@ var storage = multer.diskStorage({
     }
 })
 
+const ResumeParser = require('resume-parser');
+
 // const mailer = require('../_helpers/mailer');
 // const mailer = require('../_helpers/mail');
 const mailer = require('../_helpers/mailgun');
@@ -262,8 +264,32 @@ function extractResume(req, res, next) {
     }
 
     try {
+
+
         console.log(req.body);
         var params = req.body;
+
+
+
+        // ResumeParser.parseResumeFile(params.filepath, './public/upload/') // input file, output dir
+        // .then(file => {
+        //   console.log("Yay! " + file);
+        // })
+        // .catch(error => {
+        //   console.error(error);
+        // });
+
+        // ResumeParser
+        // .parseResumeUrl('D:\Other\angular-conmentr\stable-code\server\public\upload\1588015478683text') // url
+        // .then(data => {
+        //   console.log('Yay! ', data);
+        // })
+        // .catch(error => {
+        //   console.error(error);
+        // });
+
+
+
 
         if (req.body.filetype == "pdf") {
             console.log("pdf")
@@ -275,7 +301,7 @@ function extractResume(req, res, next) {
                     CreateAtextFile(req, res);
                 }, err => {
                     console.log(err);
-                    response(res, null, error);
+                    response(res, null, err);
                 }
             )
         } else {
@@ -296,6 +322,9 @@ function extractResume(req, res, next) {
 
         }
 
+
+
+
     } catch (err) {
         response(res, null, err);
         console.log("--------err-------------");
@@ -311,7 +340,7 @@ function CreateAtextFile(req, res, next) {
     fs.appendFile('./public/upload/' + ourTextFileName, params.DocText, function (err) {
         if (err) {
             console.log(err);
-            response(res, null, error);
+            response(res, null, err);
         } else {
             console.log('Saved!');
 
@@ -332,7 +361,9 @@ function CreateAtextFile(req, res, next) {
 
 function resumeExtraction(req, res, next) {
     var newfilePath = req.protocol + '://' + req.get('host') + req.body.textFilePath;
-    var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + newfilePath
+    var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + newfilePath;
+
+    console.log('generated file path ====================> ' , newfilePath);
 
     // var newfilePath = req.protocol + '://' + req.get('host') + '/public/upload' + 
     // var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + 'https://res.cloudinary.com/niteoit-solutions/raw/upload/v1576841420/resume/obul_s9en6x.txt'
@@ -360,9 +391,10 @@ function resumeExtraction(req, res, next) {
                 html: ""
             }
 
-            CreatemailTemplate(req, res, next)
+            CreatemailTemplate(req, res, next);
 
         } else {
+            response(res, null, error);
             console.log("err", error)
         }
     })

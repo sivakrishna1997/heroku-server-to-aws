@@ -41,7 +41,7 @@ const googleTranslateService = require('../services/google-translate.service');
 const userCompletedVideos = require('../services/manageUser');
 const PaymentCtrl = require('../services/PaymentCtrl')
 const FollowAndMessageCtrl = require('../services/FollowRequestMessageCtrl')
-
+const videoCtrl = require('../services/twilio')
 
 
 // Authentication Routes
@@ -122,6 +122,12 @@ router.post('/updateMessageStatus', FollowAndMessageCtrl.updateMessageStatus);
 router.post('/DeleteMessage', FollowAndMessageCtrl.DeleteMessage);
 
 router.post('/UpdateFollowRequestOrRejected', FollowAndMessageCtrl.UpdateFollowRequestOrRejected);
+
+
+// Video Sessions twilio
+
+router.post('/CreateVideoSeeion', videoCtrl.CreateVideoSeeion);
+
 
 
 

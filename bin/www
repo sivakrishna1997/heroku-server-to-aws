@@ -19,13 +19,11 @@ app.set('port', port);
  * Create HTTP server.
  */
 var server = http.createServer(app);
-
-
-const io = require('socket.io')(server)
+// const io = require('socket.io')(server)
 /**
  * Listen on provided port, on all network interfaces.
  */
-server.listen(process.env.PORT || port);
+// server.listen(process.env.PORT || port);
 
 server.on('error', onError);
 server.on('listening', onListening);
@@ -90,29 +88,29 @@ function onListening() {
 
 
 
-io.on('connection', client => {
-  client.on('connect', () => {
-    io.emit('newUser', "connected");
-  })
+// io.on('connection', client => {
+//   client.on('connect', () => {
+//     io.emit('newUser', "connected");
+//   })
 
-  client.on('disconnect', () => {
-    io.emit('userLeft', "disconnected");
-  })
+//   client.on('disconnect', () => {
+//     io.emit('userLeft', "disconnected");
+//   })
 
-  client.on('message', (m) => {
-    // console.log('[server](message): %s', JSON.stringify(m));
-    io.emit('message', m);
-  })
+//   client.on('message', (m) => {
+//     // console.log('[server](message): %s', JSON.stringify(m));
+//     io.emit('message', m);
+//   })
 
 
-  client.on("NewClient", function () {
-    io.emit('CreatePeer');
-  });
-  client.on('Offer', (offer) => io.emit('BackOffer', offer));
-  client.on('Answer', (data) => io.emit('BackAnswer', data));
-  client.on('disconnect', () => io.emit('Disconnect'));
-  client.on('subtitleChanged', (data) => io.emit('subtitleChanged', data));
+//   client.on("NewClient", function () {
+//     io.emit('CreatePeer');
+//   });
+//   client.on('Offer', (offer) => io.emit('BackOffer', offer));
+//   client.on('Answer', (data) => io.emit('BackAnswer', data));
+//   client.on('disconnect', () => io.emit('Disconnect'));
+//   client.on('subtitleChanged', (data) => io.emit('subtitleChanged', data));
 
-  client.on('Drawing', (draw) => io.emit('Drawing', draw));
-})
+//   client.on('Drawing', (draw) => io.emit('Drawing', draw));
+// })
 

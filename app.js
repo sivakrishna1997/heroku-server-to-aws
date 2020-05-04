@@ -8,47 +8,23 @@ const passport = require('passport');
 const cors = require('cors');
 // const io = require('socket.io')(3001);
 var bodyParser = require('body-parser');
-
+var http = require('http');
 var mongoose = require('./config/mongoose');
 var db = mongoose();
 
 // Routes
 var indexRouter = require('./routes/index');
-
 var app = express();
-
-
-// app.get('/start', (req , res)=>{ res.send("Welcome to aimentr backend !") })
-
-// var allowCrossDomain = function (req, res, next) {
-//     res.header('Access-Control-Allow-Origin', '*');
-//     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-//     res.header('Access-Control-Allow-Headers', 'Content-Type');
-//     res.header('Access-Control-Allow-Credentials', 'true');
-//     next();
-// }
-// app.use(allowCrossDomain);
-
 
 // CORS INIT
 app.use(cors());
 
-
-
-
 app.use(logger('dev')); //for show console.logs 
-
-// app.use(express.json());
-// app.use(express.urlencoded({extended: false}));
 
 app.use(bodyParser.json({ limit: '500mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '500mb' }));
-
-// app.use(express.json({ limit: '500mb' }));
-// app.use(express.urlencoded({ extended: true, limit: '500mb' }));
-
-
 app.use(cookieParser());
+
 
 // Set Static Folder
 app.use(express.static(path.join(__dirname, 'public')));
@@ -56,14 +32,12 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, './public/index.html'))
 })
 
-
-
 // Adding Passport to middleware.
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport')(passport);
 
-
+// assign routers
 app.use('/', indexRouter);
 
 
@@ -84,21 +58,25 @@ app.use(function (err, req, res, next) {
 });
 
 
+app.listen(process.env.PORT || 5001);
 
+// var server = http.createServer(app);
+// const io = require('socket.io')(server);
 
-
-app.listen(process.env.PORT || 5000);
-
+// server.listen(process.env.PORT || 5001);
+console.log("port connected 5001");
 
 
 
 // io.on('connection', client => {
 //   client.on('connect', () => {
 //     io.emit('newUser', "connected");
+//     console.log('socket backend connected')
 //   })
 
 //   client.on('disconnect', () => {
 //     io.emit('userLeft', "disconnected");
+//     console.log('socket backend disconnected')
 //   })
 
 //   client.on('message', (m) => {

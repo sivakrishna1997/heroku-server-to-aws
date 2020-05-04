@@ -1,0 +1,16 @@
+module.exports = {
+
+    // ACCOUNT_SID: 'AC3d486f12faf04f8885e14799f073f561',
+    // API_KEY_SID:'SK255f4b10bf59286700cce0fec9314b48',
+    // API_KEY_SECRET:'dJ8vQ8d0KlSPveeI1a5X6dHXqHQPSxIQ'
+
+
+    
+    ACCOUNT_SID: 'AC022aec58bc956e7751a4c484e6d34558',
+    API_KEY_SID:'SK0eaceefc0661b4f31dbe94205a99d101',
+    API_KEY_SECRET:'l6GXWKsmcMllmjezuR5oAvnSncOeSrDf'
+
+
+
+     
+}

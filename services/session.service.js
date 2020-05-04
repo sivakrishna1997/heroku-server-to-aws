@@ -85,8 +85,8 @@ function joinToSession(req, res, next) {
   let userId = req.body.username;
   let courseId = req.body.courseId;
   Session.addUserToSession(courseId, userId)
-  .then((data) => res.json({success: true, message: "User Added to session", data: data}))
-  .catch(err => res.json({success: false, message: "Failed to add user to session", err: err}));
+  .then((data) => res.status(200).json({success: true, message: "User Added to session", data: data}))
+  .catch(err => res.status(500).json({success: false, message: "Failed to add user to session", err: err}));
 }
 
 function validUserForSession(req, res, next) {
@@ -112,9 +112,9 @@ function isAdminForSession(req, res, next) {
 
   Session.isAdminForSession(sessionId, username)
   .then(admin => 
-    res.json({success: true, message: 'Admin', data: admin}))
+    res.status(200).json({success: true, message: 'Admin', data: admin}))
   .catch(err =>
-     res.json({success: false, message: 'Not Admin', err: err}));
+     res.status(500).json({success: false, message: 'Not Admin', err: err}));
 }
 
 function compileCode(req, res, next) {
