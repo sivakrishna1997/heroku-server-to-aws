@@ -128,7 +128,7 @@ router.post('/UpdateFollowRequestOrRejected', FollowAndMessageCtrl.UpdateFollowR
 
 // Video Sessions twilio
 
-router.post('/CreateVideoSeeion', videoCtrl.CreateVideoSeeion);
+router.post('/CreateVideoSession', videoCtrl.CreateVideoSession);
 router.post('/joinSession', videoCtrl.joinToSession);
 router.post('/endVideoSession', videoCtrl.EndVideoSession)
 

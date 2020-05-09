@@ -74,7 +74,7 @@ const client = new Twilio(API_KEY_SID, API_KEY_SECRET, {
 });
 
 
-videoCtrl.CreateVideoSeeion = (req, res, next) => {
+videoCtrl.CreateVideoSession = (req, res, next) => {
 
     var Params = req.body;
     var createRoomObj = {
