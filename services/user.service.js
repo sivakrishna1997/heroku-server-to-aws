@@ -8,7 +8,7 @@ const service = {
     getUsersByRole: getUsersByRole,
     filterUsers: filterUsers,
     filterUsersAndCourses: filterUsersAndCourses,
-    getUserByEmail : getUserByEmail
+    getUserByEmail: getUserByEmail
 }
 
 module.exports = service;
@@ -113,11 +113,11 @@ function filterUsers(req, res, next) {
     }
 
     if (req.body.expLevel) {
-        query['profile.work.expLevel'] = req.body.expLevel;
+        query['work.expLevel'] = req.body.expLevel;
     }
 
     if (req.body.jobType) {
-        query['profile.mentor.jobType'] = req.body.jobType;
+        query['mentor.jobType'] = req.body.jobType;
     }
 
     if (req.body.location) {
@@ -161,20 +161,20 @@ function filterUsersAndCourses(req, res, next) {
     }
 
     if (req.body.expLevel) {
-        query['profile.work.expLevel'] = req.body.expLevel;
+        query['work.expLevel'] = req.body.expLevel;
     }
 
     if (req.body.jobType) {
-        query['profile.mentor.jobType'] = req.body.jobType;
+        query['mentor.jobType'] = req.body.jobType;
     }
 
     if (req.body.location) {
-        query['profile.location'] = req.body.location;
+        query['personal.location'] = { "$regex": req.body.location, "$options": "i" };
     }
 
     if (req.body.skills) {
         // query['skills'] = req.body.skills; // It will work for one. 
-        query['profile.skills'] = { "$all": req.body.skills };
+        query['personal.skills'] = { "$all": req.body.skills };
     }
 
     if (req.body.username) {
@@ -182,18 +182,38 @@ function filterUsersAndCourses(req, res, next) {
     }
 
 
-    // console.log("Query:: ",query);
-    User.find(query, (err, doc) => {
-        if (err) {
-            response(res, null, err);
-        } else {
+    User.aggregate([
+        {
+            $match: query,
+
+        }
+    ]).then(
+        doc => {
             var data = {
                 Data: doc,
                 Message: "Menters list",
             }
             response(res, data, null);
+        }, err => {
+            response(res, null, err);
         }
-    })
+    )
+
+    // console.log("Query:: ", query);
+    // User.filterUsers(query, (err, doc) => {
+    //     if (err) {
+    //         response(res, null, err);
+    //     } else {
+    //         var data = {
+    //             Data: doc,
+    //             Message: "Menters list",
+    //         }
+    //         response(res, data, null);
+    //     }
+    // })
+
+
+
 }
 
 

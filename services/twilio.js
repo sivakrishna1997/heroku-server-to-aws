@@ -25,7 +25,7 @@ var videoCtrl = {};
 
 
 
-prepareCleanTermination()
+// prepareCleanTermination()
 
 // //Load launch options from command line
 // var protocol = process.argv[3];
@@ -100,7 +100,7 @@ videoCtrl.CreateVideoSeeion = (req, res, next) => {
         var grant = new VideoGrant();
         grant.room = Params.roomName;
         accessToken.addGrant(grant);
-        
+
         var answer = {
             jwtToken: accessToken.toJwt(),
             roomName: Params.roomName
@@ -113,7 +113,7 @@ videoCtrl.CreateVideoSeeion = (req, res, next) => {
             subtopicId: Params.subtopicId,
             users: [Params.userName],
             admin: Params.userName,
-            firebaseId:Params.hash,
+            firebaseId: Params.hash,
             startedOn: Date.now(),
             roomName: Params.roomName,
             roomSId: room.sid,
@@ -138,11 +138,149 @@ videoCtrl.CreateVideoSeeion = (req, res, next) => {
         console.log('Error creating room ' + err);
         response(res, null, err);
         process.exit(-1);
-        
+
 
     });
 
 }
+
+
+
+
+videoCtrl.createSessionToken = async function (roomName, userId) {
+    var accessToken = new AccessToken(
+        ACCOUNT_SID,
+        API_KEY_SID,
+        API_KEY_SECRET
+    );
+    accessToken.identity = userId;
+
+    var grant = new VideoGrant();
+    grant.room = roomName;
+    accessToken.addGrant(grant);
+    let token = accessToken.toJwt();
+    return token;
+}
+
+
+
+videoCtrl.joinToSession = async (req, res, next) => {
+    var params = req.body;
+    var query = {
+        courseId: params.courseId,
+        status: 1
+    }
+
+    // videoSession.find({ $query: query, $orderby: { $natural: -1 } }).limit(1).then(
+    videoSession.find(query).sort({ _id: -1 }).limit(1).then(
+        doc => {
+            console.log("doc====>", doc);
+            if (doc.length != 0) {
+                videoSession.findOneAndUpdate({ _id: doc[0]._id }, { $addToSet: { 'users': params.username } }).then(
+                    async  Updateddoc => {
+                        var token = await videoCtrl.createSessionToken(Updateddoc.roomName, params.username);
+                        console.log("doc====::>", token);
+                        var responseObj = {
+                            _id: Updateddoc._id,
+                            courseId: Updateddoc.courseId,
+                            batchId: Updateddoc.batchId,
+                            topicId: Updateddoc.topicId,
+                            subtopicId: Updateddoc.subtopicId,
+                            users: Updateddoc.users,
+                            admin: Updateddoc.admin,
+                            roomName: Updateddoc.roomName,
+                            roomSId: Updateddoc.roomSId,
+                            sessionToken: token
+                        }
+                        console.log("doc====::>", responseObj);
+
+                        var data = {
+                            Data: responseObj,
+                            Message: "Session Joined Successfully",
+                            Other: {
+                                Success: true
+                            }
+                        }
+                        response(res, data, null);
+
+                    }, err => {
+                        console.log(err);
+                        response(res, null, err);
+                    }
+                )
+            } else {
+                var data = {
+                    Data: doc,
+                    Message: "Session is not started.",
+                    Other: {
+                        Success: false
+                    }
+                }
+                response(res, data, null);
+            }
+
+        }, err => {
+            console.log(err);
+            response(res, null, err);
+        }
+    )
+
+    // videoSession.findOneAndUpdate(query, { $addToSet: { 'users': params.username } }).then(
+    //     doc => {
+    //         console.log("doc====>",doc);
+
+    //         doc.sessionToken = await videoCtrl.createSessionToken(doc.roomName, params.username);
+
+    //         var data = {
+    //             Data: doc,
+    //             Message: "Session Joined Successfully",
+    //         }
+    //         response(res, data, null);
+
+    //     }, err => {
+    //         console.log(err);
+    //         response(res, null, err);
+    //     }
+    // )
+
+}
+
+
+videoCtrl.EndVideoSession = (req, res, next) => {
+    var params = req.body;
+    var basedOn = {
+        roomSId: params.roomSId,
+    }
+    var query = {
+        status: 2,
+    }
+    videoSession.update(basedOn, { $set: query }).then(
+        doc => {
+            if (doc.n == 0) {
+                var data = {
+                    Data: doc,
+                    Message: "Topic update Failed !",
+                    Other: {
+                        Success: false
+                    }
+                }
+            } else {
+                var data = {
+                    Data: doc,
+                    Message: "Topic update Successfully !",
+                    Other: {
+                        Success: true
+                    }
+                }
+            }
+            response(res, data, null);
+        }, err => {
+            response(res, null, err);
+        }
+    )
+
+}
+
 
 
 
@@ -227,37 +365,39 @@ videoCtrl.CreateVideoSeeion = (req, res, next) => {
 /*This function makes the cleanup upon program termination. This cleaup includes
 completing the room if it's still active. Otherwise, the room will stay alive
 for 5 minutes after all participants disconnect.*/
-function prepareCleanTermination() {
-    process.stdin.resume(); //so the program will not close instantly
-    //do something when app is closing
-    process.on('exit', exitHandler.bind(null, {
-        cleanup: true
-    }));
-    //catches ctrl+c event
-    process.on('SIGINT', exitHandler.bind(null, {
-        exit: true
-    }));
-    //catches uncaught exceptions
-    process.on('uncaughtException', exitHandler.bind(null, {
-        exit: true
-    }));
 
-    function exitHandler(options, err) {
-        if (roomSid) {
-            client.video.rooms(roomSid)
-                .update({
-                    status: 'completed'
-                })
-                .then(room => {
-                    console.log('Room ' + roomSid + ' completed');
-                    if (options.exit) process.exit();
-                })
-                .catch(error => {
-                    if (options.exit) process.exit();
-                })
-        }
-    }
-}
+
+// function prepareCleanTermination() {
+//     process.stdin.resume(); //so the program will not close instantly
+//     //do something when app is closing
+//     process.on('exit', exitHandler.bind(null, {
+//         cleanup: true
+//     }));
+//     //catches ctrl+c event
+//     process.on('SIGINT', exitHandler.bind(null, {
+//         exit: true
+//     }));
+//     //catches uncaught exceptions
+//     process.on('uncaughtException', exitHandler.bind(null, {
+//         exit: true
+//     }));
+
+//     function exitHandler(options, err) {
+//         if (roomSid) {
+//             client.video.rooms(roomSid)
+//                 .update({
+//                     status: 'completed'
+//                 })
+//                 .then(room => {
+//                     console.log('Room ' + roomSid + ' completed');
+//                     if (options.exit) process.exit();
+//                 })
+//                 .catch(error => {
+//                     if (options.exit) process.exit();
+//                 })
+//         }
+//     }
+// }
 
 
 

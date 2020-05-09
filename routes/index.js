@@ -95,7 +95,9 @@ router.post('/getSubTopicsBasedOnCourseIds', courseServie.getSubTopicsBasedOnCou
 
 
 router.post('/updateSubTopicProgrammingStatus', courseServie.updateSubTopicProgrammingStatus);
-router.post('/updateSubTopicVideoUrl', courseServie.upload.any(), courseServie.updateSubTopicVideoUrl);
+router.post('/updateSubTopicVideoUrl', courseServie.upload.single('uploads'), courseServie.updateSubTopicVideoUrl);
+router.post('/updateSubTopicOutsideVideoUrl', courseServie.updateSubTopicOutsideVideoUrl);
+
 
 // User Completed Videos
 router.post('/AddUserCompletedVideosOftheCourse', userCompletedVideos.AddUserCompletedVideosOftheCourse);
@@ -127,7 +129,8 @@ router.post('/UpdateFollowRequestOrRejected', FollowAndMessageCtrl.UpdateFollowR
 // Video Sessions twilio
 
 router.post('/CreateVideoSeeion', videoCtrl.CreateVideoSeeion);
-
+router.post('/joinSession', videoCtrl.joinToSession);
+router.post('/endVideoSession', videoCtrl.EndVideoSession)
 
 
 
@@ -147,7 +150,7 @@ router.post('/getCourseStats', enrollmentsService.getCourseStats);
 router.post('/getCourseSessionStatus', sessionService.getSessionStatus)
 router.post('/createSession', sessionService.createSession);
 router.post('/endSession', sessionService.endSession);
-router.post('/joinSession', sessionService.joinToSession);
+// router.post('/joinSession', sessionService.joinToSession);
 router.post('/validUserForSession', sessionService.validUserForSession);
 router.post('/compileCode', sessionService.compileCode);
 router.post('/exitSession', sessionService.exitFromSession);

@@ -5,6 +5,10 @@ var CourseSubTopics = require('../models/courses').model('CourseSubTopics');
 const multer = require('multer');
 const UniqueIdGenerator = require('otp-generator');
 
+var stream = require('stream');
+const s3 = require('../config/s3/s3.config.js');
+
+
 // const service = {
 //     addCourse: addCourse,
 //     getAllCoursesOfMentor: getAllCoursesOfMentor,
@@ -33,6 +37,7 @@ var storage = multer.diskStorage({ //multers disk storage settings
     }
 });
 
+// var storage = multer.memoryStorage();
 
 service.upload = multer({
     storage: storage
@@ -485,12 +490,68 @@ service.updateSubTopicProgrammingStatus = (req, res, next) => {
 
 
 service.updateSubTopicVideoUrl = (req, res, next) => {
+
+    // const s3Client = s3.s3Client;
+	// const params = s3.uploadParams;
+	
+	// params.Key = req.file.originalname;
+	// params.Body = req.file.buffer;
+		
+	// s3Client.upload(params, (err, data) => {
+	// 	if (err) {
+    //         console.log(err)
+    //         res.status(500).json({error:"Error -> " + err});
+            
+	// 	}else{
+    //         console.log(data)
+    //         res.json({message: 'File uploaded successfully! -> keyname = ' + req.file.originalname});
+    //     }
+		
+	// });
+    
+
     var params = req.body;
     var basedOn = {
         subTopicId: parseInt(params.subTopicId),
     }
     var query = {
         videoUrl: "./assets/uploadedVideos/" + params.videoUrl,
+    }
+    CourseSubTopics.update(basedOn, { $set: query }).then(
+        doc => {
+            if (doc.n == 0) {
+                var data = {
+                    Data: doc,
+                    Message: "Subtopic update Failed !",
+                    Other: {
+                        Success: false
+                    }
+                }
+            } else {
+                var data = {
+                    Data: doc,
+                    Message: "Subtopic update Successfully !",
+                    Other: {
+                        Success: true
+                    }
+                }
+            }
+            response(res, data, null);
+        }, err => {
+            response(res, null, err);
+        }
+    )
+
+}
+
+service.updateSubTopicOutsideVideoUrl = (req, res, next) => {
+
+    var params = req.body;
+    var basedOn = {
+        subTopicId: params.subTopicId,
+    }
+    var query = {
+        videoUrl: params.videoUrl,
     }
     CourseSubTopics.update(basedOn, { $set: query }).then(
         doc => {
