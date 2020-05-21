@@ -1,7 +1,7 @@
 .firepad-userlist {
   /* default height */
-  height: 400px;
-  min-width: 175px;
+  /* height: 400px; */
+  min-width: 225px;
 
   background: #ebebeb;
   /* Old browsers */
@@ -27,7 +27,8 @@
 }
 
 .firepad-userlist-heading {
-  margin: 20px 15px 0;
+  /* margin: 20px 15px 0; */
+  padding: 0px 12px 8px;
   font-size: 12px;
   font-weight: bold;
   border-bottom: 2px solid #c9c9c9;
@@ -36,8 +37,8 @@
 
 .firepad-userlist-users {
   position: absolute;
-  left: 15px;
-  right: 15px;
+  left: 5px;
+  right: 5px;
   top: 38px;
   bottom: 10px;
   overflow-y: auto;

@@ -5,21 +5,43 @@ const axios = require('axios');
 const multer = require('multer');
 const otpGenerator = require('otp-generator');
 const request = require('request');
+const bcrypt = require('bcryptjs');
+
+var response = require('../response/response');
 
 var fs = require('fs')
 var textract = require('textract');
 const pdfparse = require('pdf-parse');
-
-var storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'uploads')
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now() + '-' + file.originalname)
-    }
-})
-
 const ResumeParser = require('resume-parser');
+const { PdfReader } = require('pdfreader');
+const reader = new PdfReader();
+
+var docxParser = require('docx-parser');
+
+var cloudinary = require('cloudinary').v2;
+var cloudinaryConfig = require('../config/cloudinary')
+cloudinary.config(
+    {
+        cloud_name: cloudinaryConfig.cloud_name,
+        api_key: cloudinaryConfig.api_key,
+        api_secret: cloudinaryConfig.api_secret
+    }
+)
+
+
+const s3 = require('../config/s3/s3.config.js');
+
+// var storage = multer.diskStorage({
+//     destination: function (req, file, cb) {
+//         cb(null, 'uploads')
+//     },
+//     filename: function (req, file, cb) {
+//         cb(null, file.fieldname + '-' + Date.now() + '-' + file.originalname)
+//     }
+// })
+
+
+// const ResumeParser = require('resume-parser');
 
 // const mailer = require('../_helpers/mailer');
 // const mailer = require('../_helpers/mail');
@@ -35,6 +57,31 @@ const commonFormatter = require('../formatters/common.formatter');
 const User = require('../models/users');
 const UserVerification = require('../models/user-verification');
 
+
+
+
+// var storage = multer.diskStorage({ //multers disk storage settings
+//     destination: function (req, file, cb) {
+//         cb(null, './public/assets/profile/')
+//     },
+//     filename: function (req, file, cb) {
+//         var datetimestamp = Date.now();
+//         cb(null, datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
+
+//         req.body.ImgUrl = datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1];
+
+//     }
+// });
+
+
+var storage = multer.memoryStorage();
+
+var ProfilePicupload = multer({
+    storage: storage
+});
+
+
+
 var service = {
     validUsername: validUsername,
     registerUser: registerUser,
@@ -46,7 +93,10 @@ var service = {
     resendConfirmation: resendConfirmation,
     sendOtp: sendOtp,
     verifyOtp: verifyOtp,
-    studentRegistration: studentRegistration
+    studentRegistration: studentRegistration,
+    UpdatePassword: UpdatePassword,
+    UpdateProfile: UpdateProfile,
+    upload: ProfilePicupload
 }
 
 module.exports = service;
@@ -76,7 +126,7 @@ function sendOtp(req, res, next) {
     UserVerification.FindUserVerificationCompleted(params.Email,
         (err, verifyUser) => {
             if (err) {
-                return res.json({ success: false, message: "Something went wrong", error: err });
+                return res.json({ success: false, message: err.message, error: err });
             } else if (verifyUser.length > 0) {
                 return res.json({ success: false, message: "Email already exist! Please login", error: err });
             } else {
@@ -128,60 +178,6 @@ function sendOtp(req, res, next) {
             }
         }
     )
-
-
-
-
-
-
-    // UserVerification.SaveUserData(obj,
-    //     (err, savedOtp) => {
-    //         if (err) {
-    //             return res.status(500).json({ success: false, message: 'Something went wrong' + err.message, error: err });
-    //         } else {
-    //             let html = params.html;
-    //             mailer.sentMail(params.Email, "Aimentr Verification Mail", { html }).then(
-    //                 (success) => {
-    //                     res.status(200).send({ success: true, message: 'Sent verification mail.', Data: params });
-    //                 }, (err) => {
-    //                     res.status(200).send({ success: false, message: 'Failed to sent mail.' + err.message });
-    //                 })
-    //         }
-    //     });
-
-
-    // Save OTP to db
-    // let verification = new UserVerification({
-    //     email: params.Email,
-    //     username: params.username,
-    //     otp: otp,
-    //     expiresOn: expDate.getFullYear() + ',' + expDate.getMonth() + ',' + expDate.getDate() + ',' + expDate.getHours() + ',' + expDate.getMinutes(),
-    // })
-
-    // verification.save().then(
-    //     doc => {
-    //         // UserVerification.Update(
-    //         //     { username: params.username },
-    //         //     { otp: otp, expiresOn: expDate.getFullYear() + ',' + expDate.getMonth() + ',' + expDate.getDate() + ',' + expDate.getHours() + ',' + expDate.getMinutes() },
-    //         //     { upsert: true },
-    //         //     (err, savedOtp) => {
-    //         //         if (err) {
-    //         //             return res.status(500).json({ success: false, message: 'Something went wrong', error: err });
-    //         //         } else {
-    //         let html = params.html;
-    //         mailer.sentMail(params.Email, "Aimentr Verification Mail", { html }).then(
-    //             (success) => {
-    //                 res.status(200).send({ success: true, message: 'Sent verification mail.' });
-    //             }, (err) => {
-    //                 res.status(200).send({ success: false, message: 'Failed to sent mail.' + err.message });
-    //             })
-    //         // }
-    //         // });
-    //     }, err => {
-    //         res.status(200).send({ success: false, message: err.message });
-    //     }
-    // )
-
 
 }
 
@@ -264,52 +260,30 @@ function extractResume(req, res, next) {
     }
 
     try {
+        if (file.originalname.split('.')[file.originalname.split('.').length - 1] == "pdf") {
 
+            // reader.parseBuffer( req.file.buffer , (err, item) => {
+            //     if (err){
+            //         console.error(err);
+            //     }else{
+            //         console.log(item)
+            //     }   
 
-        console.log(req.body);
-        var params = req.body;
+            // })
 
+            // let dataBuffer = fs.readFileSync(req.file);
+            // pdf(dataBuffer).then(function (data) {
+            //     console.log(data.text);
+            // });
 
-
-        // ResumeParser.parseResumeFile(params.filepath, './public/upload/') // input file, output dir
-        // .then(file => {
-        //   console.log("Yay! " + file);
-        // })
-        // .catch(error => {
-        //   console.error(error);
-        // });
-
-        // ResumeParser
-        // .parseResumeUrl('D:\Other\angular-conmentr\stable-code\server\public\upload\1588015478683text') // url
-        // .then(data => {
-        //   console.log('Yay! ', data);
-        // })
-        // .catch(error => {
-        //   console.error(error);
-        // });
-
-
-
-
-        if (req.body.filetype == "pdf") {
-            console.log("pdf")
-            var pdfFilePath = fs.readFileSync(params.filepath)
-            pdfparse(pdfFilePath).then(
-                doc => {
-                    // console.log(doc.text);
-                    req.body.DocText = doc.text;
-                    CreateAtextFile(req, res);
-                }, err => {
-                    console.log(err);
-                    response(res, null, err);
-                }
-            )
-        } else {
-            var config = {
-                preserveLineBreaks: true,
-                preserveOnlyMultipleLineBreaks: true
+            var errors = {
+                message: 'Please select docx file.'
             }
-            textract.fromFileWithPath(params.filepath, config, function (error, text) {
+            response(res, null, errors);
+
+
+        } else {
+            textract.fromBufferWithName(req.file.originalname, req.file.buffer, function (error, text) {
                 if (error) {
                     console.log(error)
                     response(res, null, error);
@@ -319,15 +293,127 @@ function extractResume(req, res, next) {
                     CreateAtextFile(req, res, next);
                 }
             })
-
         }
 
 
 
+        // console.log(req.body);
+        // var params = req.body;
+
+        // var file = req.files.resume;
+        // // const readStream = fs.createReadStream(file.tempFilePath);
+        // var s3params = {
+        //     Bucket: 'mentor-video-aimentr',
+        //     Key: file.name,
+        //     Body: file.tempFilePath,
+        // }
+
+        // s3.upload(s3params, (err, data) => {
+        //     if (err) {
+        //         console.log(err)
+        //         res.status(500).json({ error: "Error -> " + err });
+
+        //     } else {
+        //         console.log(data)
+        //         // res.json({ message: 'File uploaded successfully! -> keyname = ' + req.file.originalname });
+
+
+        //     }
+        // })
+        // return true;
+
+
+
+
+
+
+        // var file = req.files.resume;
+
+        // cloudinary.uploader.upload(file.tempFilePath,
+        //     {
+        //         public_id: "sample_document.docx",
+        //         resource_type: "raw",
+        //     }, function (err, result) {
+        //         if (err) {
+        //             console.log('err', err);
+        //             response(res, null, err);
+        //         } else {
+        //             console.log('result', result);
+
+        //             docxParser.parseDocx("https://res.cloudinary.com/aimentr/raw/upload/v1589920176/sample_document.docx", function (data) {
+        //                 console.log(data)
+        //             })
+        //             // var config = {
+        //             //     preserveLineBreaks: true,
+        //             //     preserveOnlyMultipleLineBreaks: true
+        //             // }
+        //             // textract.fromFileWithPath('https://res.cloudinary.com/aimentr/raw/upload/v1589920176/sample_document.docx', config, function (error, text) {
+        //             //     if (error) {
+        //             //         console.log(error)
+        //             //         response(res, null, error);
+        //             //     } else {
+        //             //         // console.log(text);
+        //             //         req.body.DocText = text;
+        //             //         // CreateAtextFile(req, res, next);
+        //             //     }
+        //             // })
+
+        //         }
+        //     })
+
+
+        // https://res.cloudinary.com/niteoit-solutions/raw/upload/v1576841420/resume/obul_s9en6x.txt
+
+        // https://res.cloudinary.com/niteoit-solutions/raw/upload/v1576839857/resume/neeraj_h3pssg.txt 
+
+        // https://res.cloudinary.com/niteoit-solutions/raw/upload/v1578171368/resume/sandeep_pglmlx.txt
+        // https://res.cloudinary.com/niteoit-solutions/raw/upload/v1580045636/resume/neeraj_h3pssg_c9lbtg.txt 
+
+        // https://res.cloudinary.com/niteoit-solutions/raw/upload/v1580043701/resume/se_rrrszc.txt
+
+        // ResumeParser.parseResumeUrl('https://res.cloudinary.com/niteoit-solutions/raw/upload/v1578171368/resume/sandeep_pglmlx.txt') // url
+        //     .then(data => {
+        //         console.log('Yay! ', data);
+        //     })
+        //     .catch(error => {
+        //         console.error(error);
+        //     });
+
+        // return true;
+
+        // if (req.body.filetype == "pdf") {
+        //     console.log("pdf")
+        //     var pdfFilePath = fs.readFileSync(params.filepath)
+        //     pdfparse(pdfFilePath).then(
+        //         doc => {
+        //             // console.log(doc.text);
+        //             req.body.DocText = doc.text;
+        //             CreateAtextFile(req, res);
+        //         }, err => {
+        //             console.log(err);
+        //             response(res, null, err);
+        //         }
+        //     )
+        // } else {
+        //     var config = {
+        //         preserveLineBreaks: true,
+        //         preserveOnlyMultipleLineBreaks: true
+        //     }
+        //     textract.fromFileWithPath(params.filepath, config, function (error, text) {
+        //         if (error) {
+        //             console.log(error)
+        //             response(res, null, error);
+        //         } else {
+        //             // console.log(text);
+        //             req.body.DocText = text;
+        //             CreateAtextFile(req, res, next);
+        //         }
+        //     })
+        // }
 
     } catch (err) {
         response(res, null, err);
-        console.log("--------err-------------");
+        console.log("--------err-------------", err);
     }
 
 
@@ -336,7 +422,7 @@ function extractResume(req, res, next) {
 
 function CreateAtextFile(req, res, next) {
     var params = req.body;
-    var ourTextFileName = Date.now() + "text"
+    var ourTextFileName = Date.now() + req.file.originalname.split('.')[0] + "text"
     fs.appendFile('./public/upload/' + ourTextFileName, params.DocText, function (err) {
         if (err) {
             console.log(err);
@@ -346,10 +432,10 @@ function CreateAtextFile(req, res, next) {
 
             req.body.textFilePath = '/public/upload/' + ourTextFileName + '.txt';
 
-            fs.unlink(params.filepath, function (err) {
-                if (err) throw err;
-                console.log('File deleted!');
-            });
+            // fs.unlink(params.filepath, function (err) {
+            //     if (err) throw err;
+            //     console.log('File deleted!');
+            // });
 
             resumeExtraction(req, res, next);
 
@@ -358,23 +444,24 @@ function CreateAtextFile(req, res, next) {
 }
 
 
-
 function resumeExtraction(req, res, next) {
-    var newfilePath = req.protocol + '://' + req.get('host') + req.body.textFilePath;
-    var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + newfilePath;
+    var newfilePath = req.headers.origin + req.body.textFilePath;
+    // var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + newfilePath;
 
-    console.log('generated file path ====================> ' , newfilePath);
-
-    // var newfilePath = req.protocol + '://' + req.get('host') + '/public/upload' + 
-    // var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + 'https://res.cloudinary.com/niteoit-solutions/raw/upload/v1576841420/resume/obul_s9en6x.txt'
-
-    // var requestUrl = "https://res.cloudinary.com/niteoit/raw/upload/v1586603929/pradeep.docx_x3zfaa.txt"
-    request.get(requestUrl, function (error, response, body) {
-        if (!error && response.statusCode == 200) {
-            console.log("body", body);
-            var ExtractData = JSON.parse(body);
+    console.log("newfilePath == >", newfilePath)
+    ResumeParser.parseResumeUrl(newfilePath) // url
+        .then(data => {
+            console.log('Yay! ', data.email);
+            // name:
+            // email
+            // phone
+            // experience
+            // technology
+            // skills
+            console.log("body", data);
+            var ExtractData = data;
             // sendingMail(req, res);
-            var mail = ExtractData.Email[0];
+            var mail = ExtractData.email;
             getUserNameFromMail = mail.split("@");
             console.log(getUserNameFromMail)
             let usernameEndingNumber = otpGenerator.generate(3, { alphabets: false, upperCase: false, specialChars: false });
@@ -382,22 +469,64 @@ function resumeExtraction(req, res, next) {
             console.log("otp====>", otp)
             req.body.payload = {
                 username: getUserNameFromMail[0] + usernameEndingNumber,
-                Email: ExtractData.Email[0],
-                MobileNumber: ExtractData.phone[0],
-                Context: ExtractData.Context[0],
-                Company: ExtractData.Company,
-                Experience: ExtractData.Exp_date,
+                Email: ExtractData.email,
+                MobileNumber: ExtractData.phone,
+                Skills: ExtractData.skills,
+                // Company: ExtractData.Company,
+                Experience: ExtractData.experience,
                 otp: otp,
                 html: ""
             }
 
             CreatemailTemplate(req, res, next);
-
-        } else {
+        })
+        .catch(error => {
             response(res, null, error);
-            console.log("err", error)
-        }
-    })
+            console.log("err", error);
+
+        });
+
+
+
+    // var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + newfilePath;
+
+    // console.log('generated file path ====================> ', newfilePath);
+
+    // var newfilePath = req.protocol + '://' + req.get('host') + '/public/upload' + 
+
+    // var requestUrl = 'https://resu-api.herokuapp.com/get_file?files=' + 'https://res.cloudinary.com/niteoit-solutions/raw/upload/v1576841420/resume/obul_s9en6x.txt'
+
+    // var requestUrl = "https://res.cloudinary.com/niteoit/raw/upload/v1586603929/pradeep.docx_x3zfaa.txt"
+
+    // request.get(requestUrl, function (error, resp, body) {
+    //     if (!error && resp.statusCode == 200) {
+    //         console.log("body", body);
+    //         var ExtractData = JSON.parse(body);
+    //         // sendingMail(req, res);
+    //         var mail = ExtractData.Email[0];
+    //         getUserNameFromMail = mail.split("@");
+    //         console.log(getUserNameFromMail)
+    //         let usernameEndingNumber = otpGenerator.generate(3, { alphabets: false, upperCase: false, specialChars: false });
+    //         let otp = otpGenerator.generate(6, { alphabets: false, upperCase: false, specialChars: false });
+    //         console.log("otp====>", otp)
+    //         req.body.payload = {
+    //             username: getUserNameFromMail[0] + usernameEndingNumber,
+    //             Email: ExtractData.Email[0],
+    //             MobileNumber: ExtractData.phone[0],
+    //             Context: ExtractData.Context[0],
+    //             Company: ExtractData.Company,
+    //             Experience: ExtractData.Exp_date,
+    //             otp: otp,
+    //             html: ""
+    //         }
+
+    //         CreatemailTemplate(req, res, next);
+
+    //     } else {
+    //         response(res, null, error);
+    //         console.log("err", error)
+    //     }
+    // })
 }
 
 
@@ -414,8 +543,9 @@ function studentRegistration(req, res, next) {
         username: getUserNameFromMail[0] + usernameEndingNumber,
         Email: params.email,
         MobileNumber: null,
-        Context: null,
-        Company: null,
+        Skills: "",
+        // Context: null,
+        // Company: null,
         Experience: null,
         otp: otp,
         html: ""
@@ -617,7 +747,8 @@ function registerUser(req, res, next) {
             experienceLevel: params.work.experienceLevel,
             experiences: params.work.experiences,
             context: params.work.context,
-            yearsOfExperience: params.work.yearsOfExperience
+            yearsOfExperience: params.work.yearsOfExperience,
+            designation: params.work.designation,
         },
         analysis: {},
         training: {},
@@ -727,6 +858,7 @@ function authenticateUser(req, res, next) {
     })
 }
 
+
 function resendConfirmation(req, res, next) {
     let username = req.params.username;
     User.getUserByUsername(username, (err, user) => {
@@ -754,3 +886,139 @@ function resendConfirmation(req, res, next) {
 function resetPassword(req, res, next) {
 
 }
+
+
+
+
+function UpdatePassword(req, res, next) {
+    var params = req.body;
+    var basedOn = {
+        email: params.email,
+    }
+
+    User.findOne(basedOn).then(
+        userdoc => {
+            bcrypt.compare(params.CorrentPassword, userdoc.password, function (err, isMatch) {
+                if (err) {
+                    response(res, null, err);
+                } else {
+                    bcrypt.genSalt(10, function (err, salt) {
+                        bcrypt.hash(params.NewPassword, salt, function (err, hash) {
+                            if (err) {
+                                response(res, null, err);
+                            } else {
+                                User.findOneAndUpdate({ email: params.email }, { $set: { password: hash } }).then(
+                                    doc => {
+                                        if (doc.n == 0) {
+                                            var data = {
+                                                Data: doc,
+                                                Message: "Password updateing Failed !",
+                                                Other: {
+                                                    Success: false
+                                                }
+                                            }
+                                            response(res, data, null);
+                                        } else {
+                                            User.findOne(basedOn).then(
+                                                subdoc => {
+                                                    var data = {
+                                                        Data: subdoc,
+                                                        Message: "Password updated Successfully !",
+                                                        Other: {
+                                                            Success: true
+                                                        }
+                                                    }
+                                                    response(res, data, null);
+                                                }, err => {
+                                                    response(res, null, err);
+                                                }
+                                            )
+                                        }
+                                    }, err => {
+                                        response(res, null, err);
+                                    }
+                                )
+                            }
+                        })
+                    })
+                }
+            })
+        }, err => {
+            response(res, null, err);
+        }
+    )
+
+}
+
+
+
+
+
+
+
+
+function UpdateProfile(req, res, next) {
+
+    var file = req.files.profilePic;
+
+    cloudinary.uploader.upload(file.tempFilePath, function (err, result) {
+        if (err) {
+            console.log('err', err);
+            response(res, null, err);
+        } else {
+            console.log('result', result);
+
+            var params = req.body;
+            var basedOn = {
+                email: params.email,
+            }
+            var query = {
+                profilePic: result.secure_url,
+            }
+
+            User.update(basedOn, { $set: query }).then(
+                doc => {
+                    if (doc.n == 0) {
+                        var data = {
+                            Data: doc,
+                            Message: "Profile updateing Failed !",
+                            Other: {
+                                Success: false
+                            }
+                        }
+                        response(res, data, null);
+                    } else {
+                        User.findOne(basedOn).then(
+                            subdoc => {
+                                var data = {
+                                    Data: subdoc,
+                                    Message: "Profile updated Successfully !",
+                                    Other: {
+                                        Success: true
+                                    }
+                                }
+                                response(res, data, null);
+                            }, err => {
+                                response(res, null, err);
+                            }
+                        )
+                    }
+                }, err => {
+                    response(res, null, err);
+                }
+            )
+        }
+    })
+
+
+
+
+
+}
+
+
+
+
+
+
+

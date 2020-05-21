@@ -47,41 +47,101 @@ function getUserByEmail(req, res, next) {
 
 
 function updateProfile(req, res, next) {
-    let profile = req.body.profile;
-    let username = req.body.username || req.body.mail;
-    let profileUpdated = req.body.profileUpdated;
-    // let profile = {
-    //     name: req.body.profile.name,
-    //     skills: req.body.profile.skills,
-    //     organization: req.body.profile.organization,
-    //     designation: req.body.profile.designation,
-    //     cost: req.body.profile.cost,
-    //     job_type: req.body.profile.jobType,
-    //     exp_level: req.body.profile.expLevel,
-    //     reputation: req.body.profile.reputation,
-    //     about: req.body.profile.about,
-    //     technical_desc: req.body.technicalDesc 
-    // }
-    console.log("Username:: ", req.body.username);
-    User.getUserByUsername(username, (err, user) => {
-        if (err) {
-            console.log("udpateProfile:: ", err);
-            return res.status(500).send({ success: false, msg: "Something went wrong..please try again.", err: err });
-        } else if (!!user) {
-            User.updateProfileByUsername(username, profile, (err, isUpdated) => {
-                if (err) {
-                    return res.status(500).send({ success: false, msg: "Something went wrong" });
-                } else if (!!isUpdated) {
-                    return res.status(200).send({ success: true, msg: "Profile Updated Successfully", user: isUpdated });
-                } else {
-                    return res.status(500).send({ success: false, msg: "Failed to update profile...Please try again" });
+    // let profile = req.body.profile;
+    // let username = req.body.username || req.body.mail;
+    // let profileUpdated = req.body.profileUpdated;
+
+    // console.log("Username:: ", req.body.username);
+    // User.getUserByUsername(username, (err, user) => {
+    //     if (err) {
+    //         console.log("udpateProfile:: ", err);
+    //         return res.status(500).send({ success: false, msg: "Something went wrong..please try again.", err: err });
+    //     } else if (!!user) {
+    //         User.updateProfileByUsername(username, profile, (err, isUpdated) => {
+    //             if (err) {
+    //                 return res.status(500).send({ success: false, msg: "Something went wrong" });
+    //             } else if (!!isUpdated) {
+    //                 return res.status(200).send({ success: true, msg: "Profile Updated Successfully", user: isUpdated });
+    //             } else {
+    //                 return res.status(500).send({ success: false, msg: "Failed to update profile...Please try again" });
+    //             }
+    //         })
+    //     } else {
+    //         return res.status(404).send({ success: false, msg: "User not found" })
+    //     }
+    // })
+
+    var params = req.body;
+
+    var basedOn = {
+        email: params.email,
+    }
+    var query = {}
+
+    if (params.firstname) {
+        query.firstname = params.firstname
+    }
+    if (params.lastname) {
+        query.lastname = params.lastname
+    }
+    if (params.personal) {
+        query.personal = params.personal
+    }
+    if (params.education) {
+        query.education = params.education
+    }
+    if (params.work) {
+        query.work = params.work
+    }
+    if (params.mentor) {
+        query.mentor = params.mentor
+    }
+    if (params.learningAssets) {
+        query.learningAssets = params.learningAssets
+    }
+    if (params.social) {
+        query.social = params.social
+    }
+    
+    query.profileUpdated = true;
+
+    User.findOneAndUpdate(basedOn, { $set: query }).then(
+        doc => {
+            if (doc.n == 0) {
+                var data = {
+                    Data: doc,
+                    Message: "profile updateing Failed !",
+                    Other: {
+                        Success: false
+                    }
                 }
-            })
-        } else {
-            return res.status(404).send({ success: false, msg: "User not found" })
+                response(res, data, null);
+            } else {
+                User.findOne(basedOn).then(
+                    subdoc => {
+                        var data = {
+                            Data: subdoc,
+                            Message: "profile updated Successfully !",
+                            Other: {
+                                Success: true
+                            }
+                        }
+                        response(res, data, null);
+                    }, err => {
+                        response(res, null, err);
+                    }
+                )
+            }
+
+        }, err => {
+            response(res, null, err);
         }
-    })
+    )
+
+
 }
+
+
 
 function getUsersByRole(req, res, next) {
     let role = req.body.role;

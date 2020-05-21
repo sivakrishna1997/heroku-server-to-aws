@@ -3,29 +3,22 @@ var router = express.Router();
 const passport = require('passport');
 const multer = require('multer');
 
-var storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './public/upload')
-  },
-  filename: function (req, file, cb) {
-    // cb(null, file.fieldname + '-' + Date.now() + '-' + file.originalname);
-    // var res = file.originalname.split(".");
-    // var fileName = res[0] + "_" + Date.now() + '.' + res[1]
-    // cb(null, fileName);
+// var storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, './public/upload')
+//   },
+//   filename: function (req, file, cb) {
+//     var datetimestamp = Date.now();
+//     cb(null, datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
 
+//     var filepath = "./public/upload/" + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]
+//     var filetype = file.originalname.split('.')[file.originalname.split('.').length - 1];
+//     req.body.filepath = filepath;
+//     req.body.filetype = filetype;
 
-    // req.body.UploadingFilePath =  file.fieldname + '-' + Date.now() + '-' + file.originalname;
-    var datetimestamp = Date.now();
-    cb(null, datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
-
-    var filepath = "./public/upload/" + datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]
-    var filetype = file.originalname.split('.')[file.originalname.split('.').length - 1];
-    req.body.filepath = filepath;
-    req.body.filetype = filetype;
-
-
-  }
-})
+//   }
+// })
+var storage = multer.memoryStorage();
 
 const upload = multer({ storage: storage })
 
@@ -50,7 +43,11 @@ router.post('/auth/register', authService.registerUser);
 router.post('/auth/login', authService.authenticateUser);
 router.post('/auth/resetPassword', passport.authenticate('jwt', { session: false }), authService.resetPassword);
 router.post('/extractResume', upload.single('resume'), authService.extractResume);
-// router.post('/extractResume', upload.any(), authService.extractResume);
+// router.post('/extractResume', authService.extractResume);
+router.post('/UpdatePassword', authService.UpdatePassword);
+// router.post('/UpdateProfilePic', authService.upload.single('profilePic'), authService.UpdateProfile);
+// router.post('/UpdateProfilePic',  authService.UpdateProfile);
+
 
 router.get('/mailVerified/:username', authService.mailVerified);
 router.get("/mailVerificationStatus/:username", authService.getMailVerificationStatus);
@@ -95,7 +92,9 @@ router.post('/getSubTopicsBasedOnCourseIds', courseServie.getSubTopicsBasedOnCou
 
 
 router.post('/updateSubTopicProgrammingStatus', courseServie.updateSubTopicProgrammingStatus);
+// router.post('/updateSubTopicVideoUrl', courseServie.upload.single('uploads'), courseServie.updateSubTopicVideoUrl);
 router.post('/updateSubTopicVideoUrl', courseServie.upload.single('uploads'), courseServie.updateSubTopicVideoUrl);
+
 router.post('/updateSubTopicOutsideVideoUrl', courseServie.updateSubTopicOutsideVideoUrl);
 
 

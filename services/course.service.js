@@ -5,8 +5,28 @@ var CourseSubTopics = require('../models/courses').model('CourseSubTopics');
 const multer = require('multer');
 const UniqueIdGenerator = require('otp-generator');
 
+
+//aws
+const env = require('../config/s3/s3.env.js');
+
 var stream = require('stream');
+const fs = require('fs');
+const AWS = require('aws-sdk');
+
+// const ID = 'AKIAICCO356V6UKKT3QQ';
+// const SECRET = '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';
+// // The name of the bucket that you have created
+// const BUCKET_NAME = 'mentor-video-aimentr';
+// const s3 = new AWS.S3({
+//     accessKeyId: env.AWS_ACCESS_KEY,
+//     secretAccessKey: env.AWS_SECRET_ACCESS_KEY
+// });
+
+// { params: { Bucket: 'mentor-video-aimentr' } }
+
+// var s3 = new AWS.S3({ params: { Bucket: 'mentor-video-aimentr' } });
 const s3 = require('../config/s3/s3.config.js');
+//aws
 
 
 // const service = {
@@ -24,20 +44,21 @@ var service = {}
 
 
 
-var storage = multer.diskStorage({ //multers disk storage settings
-    destination: function (req, file, cb) {
-        cb(null, './public/assets/uploadedVideos/')
-    },
-    filename: function (req, file, cb) {
-        var datetimestamp = Date.now();
-        cb(null, datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
+// var storage = multer.diskStorage({ //multers disk storage settings
+//     destination: function (req, file, cb) {
+//         cb(null, './public/assets/uploadedVideos/')
+//     },
+//     filename: function (req, file, cb) {
+//         var datetimestamp = Date.now();
+//         cb(null, datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1]);
 
-        req.body.videoUrl = datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1];
+//         req.body.videoUrl = datetimestamp + '.' + file.originalname.split('.')[file.originalname.split('.').length - 1];
 
-    }
-});
+//     }
+// });
 
-// var storage = multer.memoryStorage();
+
+var storage = multer.memoryStorage();
 
 service.upload = multer({
     storage: storage
@@ -491,56 +512,93 @@ service.updateSubTopicProgrammingStatus = (req, res, next) => {
 
 service.updateSubTopicVideoUrl = (req, res, next) => {
 
-    // const s3Client = s3.s3Client;
-	// const params = s3.uploadParams;
-	
-	// params.Key = req.file.originalname;
-	// params.Body = req.file.buffer;
-		
-	// s3Client.upload(params, (err, data) => {
-	// 	if (err) {
-    //         console.log(err)
-    //         res.status(500).json({error:"Error -> " + err});
-            
-	// 	}else{
-    //         console.log(data)
-    //         res.json({message: 'File uploaded successfully! -> keyname = ' + req.file.originalname});
-    //     }
-		
-	// });
-    
+    var params = {
+        Bucket: 'mentor-video-aimentr',
+        Key: req.file.originalname,
+        Body: req.file.buffer,
+    }
 
-    var params = req.body;
-    var basedOn = {
-        subTopicId: parseInt(params.subTopicId),
-    }
-    var query = {
-        videoUrl: "./assets/uploadedVideos/" + params.videoUrl,
-    }
-    CourseSubTopics.update(basedOn, { $set: query }).then(
-        doc => {
-            if (doc.n == 0) {
-                var data = {
-                    Data: doc,
-                    Message: "Subtopic update Failed !",
-                    Other: {
-                        Success: false
-                    }
-                }
-            } else {
-                var data = {
-                    Data: doc,
-                    Message: "Subtopic update Successfully !",
-                    Other: {
-                        Success: true
-                    }
-                }
+    s3.upload(params, (err, data) => {
+        if (err) {
+            console.log(err)
+            res.status(500).json({ error: "Error -> " + err });
+
+        } else {
+            console.log(data)
+            // res.json({ message: 'File uploaded successfully! -> keyname = ' + req.file.originalname });
+
+            var basedOn = {
+                subTopicId: parseInt(req.body.subTopicId),
             }
-            response(res, data, null);
-        }, err => {
-            response(res, null, err);
+            var query = {
+                s3key: data.key,
+                videoUrl: data.Location,
+            }
+            CourseSubTopics.update(basedOn, { $set: query }).then(
+                doc => {
+                    if (doc.n == 0) {
+                        var data = {
+                            Data: doc,
+                            Message: "Subtopic update Failed !",
+                            Other: {
+                                Success: false
+                            }
+                        }
+                    } else {
+                        var data = {
+                            Data: doc,
+                            Message: "Subtopic update Successfully !",
+                            Other: {
+                                Success: true
+                            }
+                        }
+                    }
+                    response(res, data, null);
+                }, err => {
+                    response(res, null, err);
+                }
+            )
+
+
         }
-    )
+    });
+
+
+
+
+
+
+    // var params = req.body;
+    // var basedOn = {
+    //     subTopicId: parseInt(params.subTopicId),
+    // }
+    // var query = {
+    //     videoUrl: "./assets/uploadedVideos/" + params.videoUrl,
+    // }
+    // CourseSubTopics.update(basedOn, { $set: query }).then(
+    //     doc => {
+    //         if (doc.n == 0) {
+    //             var data = {
+    //                 Data: doc,
+    //                 Message: "Subtopic update Failed !",
+    //                 Other: {
+    //                     Success: false
+    //                 }
+    //             }
+    //         } else {
+    //             var data = {
+    //                 Data: doc,
+    //                 Message: "Subtopic update Successfully !",
+    //                 Other: {
+    //                     Success: true
+    //                 }
+    //             }
+    //         }
+    //         response(res, data, null);
+    //     }, err => {
+    //         response(res, null, err);
+    //     }
+    // )
 
 }
 

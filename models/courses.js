@@ -153,6 +153,9 @@ const CourseSubTopics = mongoose.Schema({
         type: Boolean,
         default: false
     },
+    s3key:{
+        type: String,  
+    },
     videoUrl: {
         type: String
     }

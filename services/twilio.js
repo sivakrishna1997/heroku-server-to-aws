@@ -43,7 +43,7 @@ var videoCtrl = {};
 // var publicpath = path.join(__dirname, "./public");
 // app.use("/", express.static(publicpath));
 
-var server;
+// var server;
 
 // if (protocol == 'https') {
 //   var httpsOptions = {
@@ -80,7 +80,7 @@ videoCtrl.CreateVideoSession = (req, res, next) => {
     var createRoomObj = {
         type: 'group',
         uniqueName: Params.roomName,
-        // recordParticipantsOnConnect: true
+        recordParticipantsOnConnect: true
     }
 
     client.video.rooms.create(createRoomObj).then(room => {
@@ -124,6 +124,7 @@ videoCtrl.CreateVideoSession = (req, res, next) => {
         let newSession = new videoSession(NewSessionObj)
         newSession.save().then(
             doc => {
+                console.log(doc);
                 var data = {
                     Data: doc,
                     Message: "New Session Created Successfully",
@@ -259,7 +260,7 @@ videoCtrl.EndVideoSession = (req, res, next) => {
             if (doc.n == 0) {
                 var data = {
                     Data: doc,
-                    Message: "Topic update Failed !",
+                    Message: "Session endeing failed !",
                     Other: {
                         Success: false
                     }
@@ -267,7 +268,7 @@ videoCtrl.EndVideoSession = (req, res, next) => {
             } else {
                 var data = {
                     Data: doc,
-                    Message: "Topic update Successfully !",
+                    Message: "Session ended Successfully !",
                     Other: {
                         Success: true
                     }

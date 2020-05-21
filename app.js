@@ -9,12 +9,22 @@ const cors = require('cors');
 // const io = require('socket.io')(3001);
 var bodyParser = require('body-parser');
 var http = require('http');
+
+
+var expressFileupload = require('express-fileupload');
+
+// var s3 = require('./services/s3');
+// var s3 = require('./config/s3/s3.config');
+
 var mongoose = require('./config/mongoose');
 var db = mongoose();
 
 // Routes
 var indexRouter = require('./routes/index');
+var fileuploadrouts = require('./routes/fileUploadRouts')
+
 var app = express();
+
 
 // CORS INIT
 app.use(cors());
@@ -32,13 +42,28 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, './public/index.html'))
 })
 
+
+
+
+
 // Adding Passport to middleware.
 app.use(passport.initialize());
 app.use(passport.session());
 require('./config/passport')(passport);
 
+
 // assign routers
 app.use('/', indexRouter);
+
+
+
+app.use(expressFileupload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/'
+}));
+
+app.use('/', fileuploadrouts);
+
 
 
 // catch 404 and forward to error handler

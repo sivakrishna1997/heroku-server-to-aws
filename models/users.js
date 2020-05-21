@@ -31,6 +31,10 @@ const UserSchema = mongoose.Schema({
     type: Number,
     required: true
   },
+
+  profilePic: {
+    type: String,
+  },
   signInMethod: {
     type: String,
     // required: true
@@ -66,9 +70,9 @@ const UserSchema = mongoose.Schema({
     experienceLevel: String,
     yearsOfExperience: String,
     experiences: [],
-    context:{
+    context: {
       type: String
-    }
+    },
     // experiences: [
     //   {
     //     company: {
@@ -92,6 +96,9 @@ const UserSchema = mongoose.Schema({
     //     }
     //   }
     // ]
+    designation: {
+      type: String,
+    },
   },
   analysis: {
     type: Object
@@ -132,6 +139,20 @@ const UserSchema = mongoose.Schema({
       type: Boolean
     },
     opportunityType: {
+      type: String
+    }
+  },
+  social: {
+    linkedin: {
+      type: String
+    },
+    stackoverflow: {
+      type: String
+    },
+    github: {
+      type: String
+    },
+    globe: {
       type: String
     }
   }
@@ -198,6 +219,7 @@ module.exports.updateProfileByUsername = function (username, profile, callback) 
     work: profile.work,
     profileUpdated: true
   }
+
   if (profile.learningAssets) {
     update.learningAssets = profile.learningAssets;
   }
@@ -207,6 +229,7 @@ module.exports.updateProfileByUsername = function (username, profile, callback) 
   if (profile.training) {
     update.training = profile.training;
   }
+
   User.findOneAndUpdate(query, { $set: update }, callback);
 }
 
