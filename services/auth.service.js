@@ -423,14 +423,14 @@ function extractResume(req, res, next) {
 function CreateAtextFile(req, res, next) {
     var params = req.body;
     var ourTextFileName = Date.now() + req.file.originalname.split('.')[0] + "text"
-    fs.appendFile('./public/upload/' + ourTextFileName, params.DocText, function (err) {
+    fs.appendFile('./public/assets/resume_uploads/' + ourTextFileName, params.DocText, function (err) {
         if (err) {
             console.log(err);
             response(res, null, err);
         } else {
             console.log('Saved!');
 
-            req.body.textFilePath = '/public/upload/' + ourTextFileName + '.txt';
+            req.body.textFilePath = '/assets/resume_uploads/' + ourTextFileName + '.txt';
 
             // fs.unlink(params.filepath, function (err) {
             //     if (err) throw err;
@@ -769,7 +769,13 @@ function registerUser(req, res, next) {
             financialAid: params.learningAssets.financialAid,
             isOpportunities: params.learningAssets.isOpportunities,
             opportunityType: params.learningAssets.opportunityType,
-        }
+        },
+        social: {
+            linkedin: params.social.linkedin,
+            stackoverflow: params.social.stackoverflow,
+            github: params.social.github,
+            globe: params.social.globe
+          }
     });
     // const token = jwt.sign({id: req.body.username}, dbConfig.secret, {
     //     expiresIn: 600 // expires in 1 hour

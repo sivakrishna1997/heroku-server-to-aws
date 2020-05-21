@@ -156,24 +156,7 @@ const UserSchema = mongoose.Schema({
       type: String
     }
   }
-  // mentor: {
-  //   timings: {
-  //     start:{type:String },
-  //     end: { type:String  }
-  //   },  
-  //   languagesTeach: [String],
-  //   context: [String],
-  //   classification: [[String]],
-  //   jobType: String,
-  //   avgCost: Number,
-  //   reputation: Number
-  // },
-  // learningAssets: {
-  //   interestedAreas: [String],
-  //   financialAid: Boolean,
-  //   isOpportunities: Boolean,
-  //   opportunityType: [String]
-  // }
+  
 });
 
 const User = module.exports = mongoose.model('users', UserSchema);
