@@ -704,23 +704,6 @@ function validUsername(req, res, next) {
  */
 function registerUser(req, res, next) {
     var params = req.body;
-    // let user = new User({
-    //     username: req.body.username,
-    //     password: req.body.password,
-    //     role: req.body.role,
-    //     profileUpdated: false,
-    //     verified: false,
-    //     isActive: false,
-    //     signInMethod: 'local', //TODO: It Will come dynamic in future.
-    //     personal: {
-    //         mail: req.body.mail,
-    //         gender: null,
-    //         mobile: null,
-    //         about: null,
-    //         dob: null,
-    //         location: null
-    //     }
-    // });
 
     let user = new User({
         email: params.email,
@@ -771,10 +754,10 @@ function registerUser(req, res, next) {
             opportunityType: params.learningAssets.opportunityType,
         },
         social: {
-            linkedin: params.social.linkedin,
-            stackoverflow: params.social.stackoverflow,
-            github: params.social.github,
-            globe: params.social.globe
+            linkedin: 'https://www.linkedin.com/',
+            stackoverflow: 'https://stackoverflow.com/',
+            github: 'https://github.com/',
+            globe: 'https://dribbble.com/'
           }
     });
     // const token = jwt.sign({id: req.body.username}, dbConfig.secret, {
