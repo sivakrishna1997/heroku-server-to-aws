@@ -760,19 +760,7 @@ function registerUser(req, res, next) {
             globe: 'https://dribbble.com/'
           }
     });
-    // const token = jwt.sign({id: req.body.username}, dbConfig.secret, {
-    //     expiresIn: 600 // expires in 1 hour
-    // })
-    // const link = 'http://localhost:9009/profile?id='+token;
-    // var html = 'Hello'+req.body.username+',<br> Please Click on the link to verify your email.<br><a href='+link+' target="_blank">Click here to verify</a>';
-    // mailer.sentMail(req.body.mail, "Conmentr Verification Mail", {html}).then((result) => {
-    //    return  res.status(200).send({success: true, msg: 'User added successfully.Sent verification mail.', result: result});
-    // }, (err) => {
-    //     return res.status(200).send({success: true, msg: 'User added successfully.Failed to sent mail.', result: result});
-    // })
-
-
-    // let user = new User(req.body);
+  
     User.getUserByUsername({ email: params.email, username: params.username, }, (err, result) => {
         if (err) {
             next();

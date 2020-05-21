@@ -73,29 +73,7 @@ const UserSchema = mongoose.Schema({
     context: {
       type: String
     },
-    // experiences: [
-    //   {
-    //     company: {
-    //       type: String
-    //     },
-    //     duration: {
-    //       start: {
-    //         type: String
-    //       }, end: {
-    //         type: String
-    //       },
-    //       current: {
-    //         type: Boolean
-    //       }
-    //     },
-    //     role: {
-    //       type: String
-    //     },
-    //     description: {
-    //       type: String
-    //     }
-    //   }
-    // ]
+   
     designation: {
       type: String,
     },
