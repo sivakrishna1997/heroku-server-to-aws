@@ -102,7 +102,7 @@ function updateProfile(req, res, next) {
     if (params.social) {
         query.social = params.social
     }
-    
+
     query.profileUpdated = true;
 
     User.findOneAndUpdate(basedOn, { $set: query }).then(
@@ -220,6 +220,39 @@ function filterUsersAndCourses(req, res, next) {
         query.role = req.body.role;
     }
 
+
+    if (req.body.searchByMentor) {
+        query.$or = [{ email: { "$regex": req.body.searchByMentor, "$options": "i" } },
+        { username: { "$regex": req.body.searchByMentor, "$options": "i" } },
+        { firstname: { "$regex": req.body.searchByMentor, "$options": "i" } },
+        { lastname: { "$regex": req.body.searchByMentor, "$options": "i" } }
+        ]
+
+    }
+
+    if (req.body.location) {
+        query['personal.location'] = { "$regex": req.body.location, "$options": "i" };
+    }
+
+    if (req.body.category) {
+        query['work.designation'] = { "$regex": req.body.category, "$options": "i" };
+    }
+
+    if (req.body.keywords.length != 0) {
+        var RegexKeyWordsMatch = req.body.keywords.map(function (val) {
+            // return new RegExp('^[' + val + '].*', 'i');
+            return new RegExp('^' + val, 'i');
+        })
+
+        console.log(RegexKeyWordsMatch)
+
+        query['mentor.languagesTeach'] = { $elemMatch: { language: { "$in": RegexKeyWordsMatch } } }
+
+    }
+
+
+
+
     if (req.body.expLevel) {
         query['work.expLevel'] = req.body.expLevel;
     }
@@ -228,9 +261,6 @@ function filterUsersAndCourses(req, res, next) {
         query['mentor.jobType'] = req.body.jobType;
     }
 
-    if (req.body.location) {
-        query['personal.location'] = { "$regex": req.body.location, "$options": "i" };
-    }
 
     if (req.body.skills) {
         // query['skills'] = req.body.skills; // It will work for one. 
@@ -241,7 +271,7 @@ function filterUsersAndCourses(req, res, next) {
         query['username'] = { "$ne": req.body.username };
     }
 
-
+    console.log("filters==>", query);
     User.aggregate([
         {
             $match: query,
